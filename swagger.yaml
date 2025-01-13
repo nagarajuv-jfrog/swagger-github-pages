@@ -176,4 +176,3 @@ paths:
                 $ref: '#/components/schemas/CleanupPolicy'
         '404':
           description: Policy not found.
-      
