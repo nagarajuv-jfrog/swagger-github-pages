@@ -14,7 +14,7 @@ security:
   - ApiKeyAuth: []
 
 paths:
-  /cleanup/policies:
+  /cleanup/packages/policies:
     get:
       summary: Get a list of cleanup policies
       operationId: getCleanupPolicies
