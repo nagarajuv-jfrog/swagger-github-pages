@@ -176,3 +176,24 @@ paths:
                 $ref: '#/components/schemas/CleanupPolicy'
         '404':
           description: Policy not found.
+      
+  /cleanup/policies/{key}:
+    delete:
+      summary: Delete a specific cleanup policy by key
+      operationId: deleteCleanupPolicy
+      security:
+        - basicAuth: []
+        - apiKeyAuth: []
+        - oauth2: [write]  # Requires write scope
+      parameters:
+        - name: key
+          in: path
+          required: true
+          description: The unique identifier for the cleanup policy.
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Policy deleted successfully.
+        '404':
+          description: Policy not found.
