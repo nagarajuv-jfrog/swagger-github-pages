@@ -4,16 +4,16 @@ info:
   description: API for managing cleanup policies in Artifactory.
   version: 1.0.0
 servers:
-  - url: http://{host}/artifactory/api
-    description: Artifactory API server
-    variables:
-      host:
-        default: localhost
+  - url: http://{host}:{port}/artifactory/api
+security:
+  - basicAuth: []
 paths:
   /cleanup/policies:
     post:
       summary: Create or Update a Cleanup Policy
       operationId: createOrUpdateCleanupPolicy
+      security:
+        - basicAuth: []
       requestBody:
         required: true
         content:
@@ -32,14 +32,14 @@ paths:
                   description: Cron expression defining when the policy should run.
                 itemType:
                   type: string
-                  enum: [releaseBundle]  # Adjust with other types if applicable.
+                  enum: [releaseBundle]
                   description: Type of item to be cleaned up by this policy.
                 durationInMinutes:
                   type: integer
-                  description: Duration in minutes for which the policy is set.
+                  description: Duration in minutes for the policy.
                 enabled:
                   type: boolean
-                  description: Indicates whether the policy is currently enabled.
+                  description: Indicates whether the policy is enabled.
                 searchCriteria:
                   type: object
                   properties:
@@ -58,7 +58,7 @@ paths:
                         properties:
                           name:
                             type: string
-                            description: Name of the release bundle to be cleaned.
+                            description: Name of the release bundle.
                           projectKey:
                             type: string
                             description: Project key associated with the release bundle.
@@ -90,6 +90,10 @@ paths:
         '500':
           description: Internal server error.
 components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
   schemas:
     CleanupPolicy:
       type: object
