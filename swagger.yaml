@@ -1,17 +1,15 @@
 openapi: 3.0.0
 info:
-  title: Example API
-  description: API for managing various resources with different authentication methods.
+  title: Cleanup Policy API
+  description: API for managing cleanup policies in Artifactory.
   version: 1.0.0
-
 servers:
-  - url: http://{host}:{port}/api
-    description: API server
+  - url: http://{host}:{port}/artifactory/api
     variables:
       host:
         default: localhost
       port:
-        default: '8080'
+        default: '8081'
 
 components:
   securitySchemes:
@@ -22,9 +20,9 @@ components:
       
     apiKeyAuth:
       type: apiKey
-      name: X-Api-Key  # Change based on how the API key should be sent (header, query, etc.)
+      name: X-Api-Key
       in: header
-      description: API Key authentication.
+      description: API Key authentication required in the header.
 
     oauth2:
       type: oauth2
@@ -49,20 +47,13 @@ security:
       - write
 
 paths:
-  /resource:
-    get:
-      summary: Get a resource
-      security:
-        - apiKeyAuth: []  # Override global security
-      responses:
-        '200':
-          description: Successful response
-        '401':
-          description: Unauthorized
-
+  /cleanup/policies:
     post:
-      summary: Create a resource
+      summary: Create or Update a Cleanup Policy
+      operationId: createOrUpdateCleanupPolicy
       security:
+        - basicAuth: []
+        - apiKeyAuth: []
         - oauth2: [write]  # Requires write scope
       requestBody:
         required: true
@@ -71,35 +62,138 @@ paths:
             schema:
               type: object
               properties:
-                name:
+                key:
                   type: string
+                  description: Unique identifier for the cleanup policy.
                 description:
                   type: string
-      responses:
-        '201':
-          description: Resource created successfully
-        '401':
-          description: Unauthorized
-        '403':
-          description: Forbidden
-
-  /login:
-    post:
-      summary: User login
-      security: []  # No security for login endpoint
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
+                  description: Description of the policy.
+                cronExp:
                   type: string
-                password:
+                  description: Cron expression defining when the policy should run.
+                itemType:
                   type: string
+                  enum: [releaseBundle]
+                  description: Type of item to be cleaned up by this policy.
+                durationInMinutes:
+                  type: integer
+                  description: Duration in minutes for which the policy is set.
+                enabled:
+                  type: boolean
+                  description: Indicates whether the policy is currently enabled.
+                searchCriteria:
+                  type: object
+                  properties:
+                    includeAllProjects:
+                      type: boolean
+                      description: Whether the policy applies to all projects.
+                    includedProjects:
+                      type: array
+                      items:
+                        type: string
+                      description: List of specific project keys for the policy.
+                    releaseBundles:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                            description: Name of the release bundle to be cleaned.
+                          projectKey:
+                            type: string
+                            description: Project key associated with the release bundle.
+                    excludePromotedEnvironments:
+                      type: array
+                      items:
+                        type: string
+                      description: Environments to be excluded from the cleanup policy.
+                    createdBeforeInMonths:
+                      type: integer
+                      description: Age of release bundles in months for cleanup criteria.
+              required: [key, itemType, durationInMinutes, enabled, searchCriteria]
       responses:
         '200':
-          description: Login successful
+          description: Cleanup policy created or updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Cleanup policy created/updated successfully."
+                  policy:
+                    type: object
+                    $ref: '#/components/schemas/CleanupPolicy'
+        '400':
+          description: Invalid input.
+        '500':
+          description: Internal server error.
+        
+    get:
+      summary: Get Cleanup Policies
+      operationId: getCleanupPolicies
+      security:
+        - basicAuth: []
+        - apiKeyAuth: []
+        - oauth2: [read]  # Requires read scope
+      responses:
+        '200':
+          description: Successful response with cleanup policies data.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CleanupPolicy'
         '401':
-          description: Invalid credentials
+          description: Unauthorized.
+        '403':
+          description: Forbidden.
+        
+  /cleanup/policies/{key}:
+    get:
+      summary: Get a specific cleanup policy by key
+      operationId: getCleanupPolicyByKey
+      security:
+        - basicAuth: []
+        - apiKeyAuth: []
+        - oauth2: [read]
+      parameters:
+        - name: key
+          in: path
+          required: true
+          description: The unique identifier for the cleanup policy.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response with the cleanup policy data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CleanupPolicy'
+        '404':
+          description: Policy not found.
+      
+  /cleanup/policies/{key}:
+    delete:
+      summary: Delete a specific cleanup policy by key
+      operationId: deleteCleanupPolicy
+      security:
+        - basicAuth: []
+        - apiKeyAuth: []
+        - oauth2: [write]  # Requires write scope
+      parameters:
+        - name: key
+          in: path
+          required: true
+          description: The unique identifier for the cleanup policy.
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Policy deleted successfully.
+        '404':
+          description: Policy not found.
