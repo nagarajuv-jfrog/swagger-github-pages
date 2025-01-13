@@ -4,10 +4,12 @@ info:
   description: API for managing cleanup policies in Artifactory.
   version: 1.0.0
 servers:
-  - url: http://{host}/artifactory/api
+  - url: http://{host}:{port}/artifactory/api
     variables:
       host:
         default: localhost
+      port:
+        default: '8081'
 
 components:
   securitySchemes:
